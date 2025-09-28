@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>HTML Toolbox</title>
+  <link rel="stylesheet" href="assets/css/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    h1 {
+      text-align: center;
+      color: #222;
+    }
+
+    .category {
+      margin-top: 40px;
+    }
+
+    .category h2 {
+      border-bottom: 2px solid #007BFF;
+      padding-bottom: 5px;
+      margin-bottom: 20px;
+      color: #007BFF;
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .tool-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: transform 0.2s;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .tool-card img {
+      width: 50px;
+      height: 50px;
+      margin-bottom: 10px;
+    }
+
+    .tool-card h3 {
+      margin: 10px 0 5px;
+      font-size: 18px;
+    }
+
+    .tool-card p {
+      font-size: 14px;
+      color: #555;
+      min-height: 40px;
+    }
+
+    .tool-card a {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 6px 12px;
+      background-color: #007BFF;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background-color 0.2s;
+    }
+
+    .tool-card a:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>HTML Toolbox</h1>
+  <p style="text-align:center;">各式各樣的小工具集合 🚀</p>
+
+  <!-- 分類：文字工具 -->
+  <div class="category">
+    <h2>文字工具</h2>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <img src="./assets/images/icon-base64-encoder.png" alt="Base64">
+        <h3>Base64 編碼器</h3>
+        <p>輕鬆將文字轉換成 Base64 或從 Base64 解碼回文字。</p>
+        <a href="tools/base64-encoder.html">前往工具</a>
+      </div>
+
+      <div class="tool-card">
+        <img src="./assets/images/icon-json-formatter.png" alt="JSON">
+        <h3>JSON 格式化器</h3>
+        <p>快速格式化或壓縮 JSON，方便閱讀與使用。</p>
+        <a href="tools/json-formatter.html">前往工具</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 分類：圖片工具 -->
+  <div class="category">
+    <h2>圖片工具</h2>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <img src="./assets/images/icon-qrcode-generator.png" alt="QR Code">
+        <h3>QR Code 生成器</h3>
+        <p>快速產生 QR Code，方便分享網址或訊息。</p>
+        <a href="./tools/image/qr-generator.html">前往工具</a>
+      </div>
+
+      <div class="tool-card">
+        <img src="data:image/svg+xml;base64,...你的顏色選擇器 SVG Base64 ..." alt="Color Picker">
+        <h3>顏色選擇器</h3>
+        <p>挑選顏色並取得 HEX / RGB / HSL 色碼。</p>
+        <a href="./tools/image/color-picker.html">前往工具</a>
+      </div>
+
+      <div class="tool-card">
+        <img src="data:image/svg+xml;base64,...你的顏色選擇器 SVG Base64 ..." alt="Color Picker">
+        <h3>動態調色盤</h3>
+        <p></p>
+        <a href="./tools/image/dynamic-color-palette.html">前往工具</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="category">
+    <h2>未分類</h2>
+    <div class="tool-grid">
+      <div class="tool-card">
+        <!-- <img src="./assets/images/icon-qrcode-generator.png" alt="QR Code"> -->
+        <h3>Client Info</h3>
+        <p></p>
+        <a href="./tools/client-info.html">前往工具</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
