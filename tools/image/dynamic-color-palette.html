@@ -1,55 +1,55 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic Color Palette</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
-      padding: 20px;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Color Palette</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f4;
+        padding: 20px;
+      }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+      h1 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
 
-    #input-container {
-      margin-bottom: 20px;
-      text-align: center;
-    }
+      #input-container {
+        margin-bottom: 20px;
+        text-align: center;
+      }
 
-    textarea {
-      width: 80%;
-      height: 150px;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
+      textarea {
+        width: 80%;
+        height: 150px;
+        padding: 10px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
 
-    #color-palette {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: flex-start;
-    }
+      #color-palette {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: flex-start;
+      }
 
-    .color-box {
-      display: inline-block;
-      padding: 10px 20px;
-      margin: 5px;
-      box-sizing: border-box;
-      border: 1px solid #ccc;
-      font-size: 12px;
-      text-align: center;
-      vertical-align: middle;
-      border-radius: 8px;
-      white-space: nowrap; /* 防止文字換行 */
-      /* width: 150px;
+      .color-box {
+        display: inline-block;
+        padding: 10px 20px;
+        margin: 5px;
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        font-size: 12px;
+        text-align: center;
+        vertical-align: middle;
+        border-radius: 8px;
+        white-space: nowrap; /* 防止文字換行 */
+        /* width: 150px;
       height: 150px;
       display: flex;
       align-items: center;
@@ -59,85 +59,94 @@
       border-radius: 8px;
       border: 1px solid #ccc;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
-    }
-  </style>
-</head>
-<body>
-  <h1>Dynamic Color Palette</h1>
-  <h2>輸入你的 :root { } 樣式表 (color 的 prefix 必須是 --color-), 將會自動呈現每一個色碼的顏色方塊</h2>
-  <div id="input-container">
-    <textarea id="css-input" placeholder="輸入 :root { 變數 } 並顯示顏色方塊..." oninput="updateColorPalette()">:root {
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Dynamic Color Palette</h1>
+    <h2>
+      輸入你的 :root { } 樣式表 (color 的 prefix 必須是 --color-),
+      將會自動呈現每一個色碼的顏色方塊
+    </h2>
+    <div id="input-container">
+      <textarea
+        id="css-input"
+        placeholder="輸入 :root { 變數 } 並顯示顏色方塊..."
+        oninput="updateColorPalette()"
+      >
+:root {
   --color-pink: rgba(255, 103, 143, 1);
   --color-red: rgba(243, 51, 102, 1);
   --color-black: rgba(21, 21, 21, 1);
   --color-white: rgba(255, 255, 255, 1);
   --color-gray: rgba(199, 199, 199, 1);
-}</textarea>
-    <br>
-    <!-- <button onclick="updateColorPalette()">顯示顏色方塊</button> -->
-  </div>
-  <div id="color-palette"></div>
+}</textarea
+      >
+      <br />
+      <!-- <button onclick="updateColorPalette()">顯示顏色方塊</button> -->
+    </div>
+    <div id="color-palette"></div>
 
-  <script>
-    async function updateColorPalette() {
-      const cssInput = document.getElementById('css-input').value;
-      const styleElement = document.createElement('style');
-      
-      styleElement.textContent = cssInput;
+    <script>
+      async function updateColorPalette() {
+        const cssInput = document.getElementById("css-input").value;
+        const styleElement = document.createElement("style");
 
-      // 確保只插入一個 style 標籤
-      const existingStyle = document.getElementById('dynamic-style');
-      
-      if (existingStyle) existingStyle.remove();
+        styleElement.textContent = cssInput;
 
-      styleElement.id = 'dynamic-style';
-      document.head.appendChild(styleElement);
+        // 確保只插入一個 style 標籤
+        const existingStyle = document.getElementById("dynamic-style");
 
-      // 清空現有顏色方塊
-      const paletteContainer = document.getElementById('color-palette');
+        if (existingStyle) existingStyle.remove();
 
-      paletteContainer.innerHTML = '';
+        styleElement.id = "dynamic-style";
+        document.head.appendChild(styleElement);
 
-      // 獲取新 :root 中的變量
-      const rootStyles = document.styleSheets[1].cssRules[0].style;
-      // const rootStyles = getComputedStyle(document.documentElement);
+        // 清空現有顏色方塊
+        const paletteContainer = document.getElementById("color-palette");
 
-      const colorVariables = [];
+        paletteContainer.innerHTML = "";
 
-      for (let i = 0; i < rootStyles.length; i++) {
-        const variableName = rootStyles[i];
+        // 獲取新 :root 中的變量
+        const rootStyles = document.styleSheets[1].cssRules[0].style;
+        // const rootStyles = getComputedStyle(document.documentElement);
 
-        if (variableName.startsWith('--color-')) {
-          colorVariables.push(variableName);
+        const colorVariables = [];
+
+        for (let i = 0; i < rootStyles.length; i++) {
+          const variableName = rootStyles[i];
+
+          if (variableName.startsWith("--color-")) {
+            colorVariables.push(variableName);
+          }
         }
+
+        // 動態生成顏色方塊
+        colorVariables.forEach((variable) => {
+          // const color = rootStyles.getPropertyValue(variable).trim();
+          const color = getComputedStyle(document.documentElement)
+            .getPropertyValue(variable)
+            .trim();
+
+          const colorBox = document.createElement("div");
+          colorBox.className = "color-box";
+          colorBox.style.backgroundColor = color;
+
+          // 計算顏色亮度，決定文字顏色
+
+          if (color) {
+            const rgb = color.match(/\d+/g).map(Number);
+            const brightness = rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114;
+            colorBox.style.color = brightness > 186 ? "black" : "white";
+          }
+
+          colorBox.textContent = variable;
+          paletteContainer.appendChild(colorBox);
+        });
       }
 
-      // 動態生成顏色方塊
-      colorVariables.forEach(variable => {
-        // const color = rootStyles.getPropertyValue(variable).trim();
-        const color = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
-
-
-        const colorBox = document.createElement('div');
-        colorBox.className = 'color-box';
-        colorBox.style.backgroundColor = color;
-
-        // 計算顏色亮度，決定文字顏色
-        
-        if (color) {
-          const rgb = color.match(/\d+/g).map(Number);
-          const brightness = (rgb[0] * 0.299 + rgb[1] * 0.587 + rgb[2] * 0.114);
-          colorBox.style.color = brightness > 186 ? 'black' : 'white';
-        }
-
-        colorBox.textContent = variable;
-        paletteContainer.appendChild(colorBox);
-      });
-    }
-
-    // 預設顯示初始顏色
-    updateColorPalette();
-  </script>
-</body>
+      // 預設顯示初始顏色
+      updateColorPalette();
+    </script>
+  </body>
 </html>
-

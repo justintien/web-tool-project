@@ -1,44 +1,54 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <title>Base64 編碼器</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-  <h1>Base64 編碼 / 解碼</h1>
-  <textarea id="input" placeholder="輸入文字..." rows="5" cols="50"></textarea>
-  
-  <div class="buttons">
-    <button onclick="encode()">編碼</button>
-    <button onclick="decode()">解碼</button>
-    <button onclick="clearText()">清除</button>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Base64 編碼器</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+  <body>
+    <h1>Base64 編碼 / 解碼</h1>
+    <textarea
+      id="input"
+      placeholder="輸入文字..."
+      rows="5"
+      cols="50"
+    ></textarea>
 
-  <h2>結果</h2>
-  <textarea id="output" rows="5" cols="50" readonly></textarea>
+    <div class="buttons">
+      <button onclick="encode()">編碼</button>
+      <button onclick="decode()">解碼</button>
+      <button onclick="clearText()">清除</button>
+    </div>
 
-  <p><a href="../index.html">← 返回工具目錄</a></p>
+    <h2>結果</h2>
+    <textarea id="output" rows="5" cols="50" readonly></textarea>
 
-  <script>
-    function encode() {
-      const text = document.getElementById("input").value;
-      document.getElementById("output").value = btoa(unescape(encodeURIComponent(text)));
-    }
+    <p><a href="../index.html">← 返回工具目錄</a></p>
 
-    function decode() {
-      try {
+    <script>
+      function encode() {
         const text = document.getElementById("input").value;
-        document.getElementById("output").value = decodeURIComponent(escape(atob(text)));
-      } catch (e) {
-        document.getElementById("output").value = "解碼失敗，請確認輸入的文字是有效的 Base64。"
+        document.getElementById("output").value = btoa(
+          unescape(encodeURIComponent(text)),
+        );
       }
-    }
 
-    function clearText() {
-      document.getElementById("input").value = "";
-      document.getElementById("output").value = "";
-    }
-  </script>
-</body>
+      function decode() {
+        try {
+          const text = document.getElementById("input").value;
+          document.getElementById("output").value = decodeURIComponent(
+            escape(atob(text)),
+          );
+        } catch (e) {
+          document.getElementById("output").value =
+            "解碼失敗，請確認輸入的文字是有效的 Base64。";
+        }
+      }
+
+      function clearText() {
+        document.getElementById("input").value = "";
+        document.getElementById("output").value = "";
+      }
+    </script>
+  </body>
 </html>

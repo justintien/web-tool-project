@@ -1,50 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <title>JSON 格式化器</title>
-  <link rel="stylesheet" href="../assets/css/style.css">
-</head>
-<body>
-  <h1>JSON 格式化器</h1>
-  <textarea id="input" placeholder="貼上 JSON ..." rows="10"></textarea>
-  
-  <div class="buttons">
-    <button onclick="formatJSON()">格式化</button>
-    <button onclick="minifyJSON()">壓縮</button>
-    <button onclick="clearText()">清除</button>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <title>JSON 格式化器</title>
+    <link rel="stylesheet" href="../assets/css/style.css" />
+  </head>
+  <body>
+    <h1>JSON 格式化器</h1>
+    <textarea id="input" placeholder="貼上 JSON ..." rows="10"></textarea>
 
-  <h2>結果</h2>
-  <textarea id="output" rows="10" readonly></textarea>
+    <div class="buttons">
+      <button onclick="formatJSON()">格式化</button>
+      <button onclick="minifyJSON()">壓縮</button>
+      <button onclick="clearText()">清除</button>
+    </div>
 
-  <p><a href="../index.html">← 返回工具目錄</a></p>
+    <h2>結果</h2>
+    <textarea id="output" rows="10" readonly></textarea>
 
-  <script>
-    function formatJSON() {
-      try {
-        const text = document.getElementById("input").value;
-        const obj = JSON.parse(text);
-        document.getElementById("output").value = JSON.stringify(obj, null, 2);
-      } catch (e) {
-        document.getElementById("output").value = "格式化失敗，請確認輸入的是有效 JSON。"
+    <p><a href="../index.html">← 返回工具目錄</a></p>
+
+    <script>
+      function formatJSON() {
+        try {
+          const text = document.getElementById("input").value;
+          const obj = JSON.parse(text);
+          document.getElementById("output").value = JSON.stringify(
+            obj,
+            null,
+            2,
+          );
+        } catch (e) {
+          document.getElementById("output").value =
+            "格式化失敗，請確認輸入的是有效 JSON。";
+        }
       }
-    }
 
-    function minifyJSON() {
-      try {
-        const text = document.getElementById("input").value;
-        const obj = JSON.parse(text);
-        document.getElementById("output").value = JSON.stringify(obj);
-      } catch (e) {
-        document.getElementById("output").value = "壓縮失敗，請確認輸入的是有效 JSON。"
+      function minifyJSON() {
+        try {
+          const text = document.getElementById("input").value;
+          const obj = JSON.parse(text);
+          document.getElementById("output").value = JSON.stringify(obj);
+        } catch (e) {
+          document.getElementById("output").value =
+            "壓縮失敗，請確認輸入的是有效 JSON。";
+        }
       }
-    }
 
-    function clearText() {
-      document.getElementById("input").value = "";
-      document.getElementById("output").value = "";
-    }
-  </script>
-</body>
+      function clearText() {
+        document.getElementById("input").value = "";
+        document.getElementById("output").value = "";
+      }
+    </script>
+  </body>
 </html>

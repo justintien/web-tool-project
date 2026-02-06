@@ -1,0 +1,27 @@
+{
+  // workbench
+  "workbench.tree.indent": 10, // 設定樹狀結構的縮排寬度, 預設值: 8
+
+  // editor
+  "editor.cursorBlinking": "expand", // 設定游標的閃爍樣式為擴展
+  "editor.guides.bracketPairs": "active", // 僅在活動括號對上顯示導引線
+  "editor.codeActionsOnSave": {
+    "source.formatDocument": "explicit",
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
+  },
+  
+  "[javascript][css][html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.formatOnSave": true,
+
+  // 控制相关文件嵌套展示
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.expand": false,
+  "explorer.fileNesting.patterns": {
+  },
+
+  // stylelint 插件設定
+  "stylelint.validate": ["css", "less", "postcss", "scss", "vue", "sass"],
+}
