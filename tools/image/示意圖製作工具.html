@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <title>示意圖製作工具</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; }
+    .controls { margin-top: 10px; text-align: center; }
+    .controls label { margin: 0 8px; display: inline-block; }
+    canvas { border: 2px dashed #ccc; margin: 20px auto; display: block; max-width: 100%; height: auto; }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <label>文字：
+    <textarea id="textInput" rows="4" style="width: 300px;">請輸入文字</textarea>
+    </label>
+    <label>寬度：<input type="number" id="widthInput" value="1920" style="width:70px;"></label>
+    <label>高度：<input type="number" id="heightInput" value="1080" style="width:70px;"></label>
+    <label>文字大小：<input type="number" id="fontSizeInput" value="200" style="width:70px;"></label><br>
+    <label><input type="checkbox" id="randomBgCheckbox" checked> 隨機背景色</label>
+    <label>背景色：<input type="color" id="bgColorInput" value="#ffffff"></label>
+    <label>文字顏色：<input type="color" id="textColorInput" value="#000000"></label>
+    <button onclick="generateBase()">產生圖片</button>
+    <button onclick="downloadBoth()">下載 PNG + JPG</button>
+    <p style="margin: 10px 0;">拖曳圖片進畫布，點擊圖片選取後可刪除（Delete / Backspace）</p>
+  </div>
+  <canvas id="myCanvas"></canvas>
+
+  <script>
+    const canvas = document.getElementById('myCanvas')
+    const ctx = canvas.getContext('2d')
+    let baseImageData = null
+
+    const overlayImages = []
+    let selectedImage = null
+    let draggingImage = null
+    let resizingImage = null
+    let dragOffsetX = 0
+let dragOffsetY = 0
+    let canvasWidth = 1920
+let canvasHeight = 1080
+
+    function getRandomColor() {
+      return `hsl(${Math.floor(Math.random() * 360)}, 70%, 80%)`
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+      const words = text.split(/\s+/)
+      let line = ''
+  const lines = []
+      for (const word of words) {
+        const testLine = line + word + ' '
+        if (ctx.measureText(testLine).width > maxWidth && line !== '') {
+          lines.push(line.trim())
+          line = word + ' '
+        } else {
+          line = testLine
+        }
+      }
+      lines.push(line.trim())
+      const totalHeight = lines.length * lineHeight
+      const startY = y - totalHeight / 2 + lineHeight / 2
+      lines.forEach((line, i) => ctx.fillText(line, x, startY + i * lineHeight))
+    }
+
+    function generateBase() {
+      const text = document.getElementById('textInput').value || '請輸入文字'
+      canvasWidth = parseInt(document.getElementById('widthInput').value) || 1920
+      canvasHeight = parseInt(document.getElementById('heightInput').value) || 1080
+      const fontSize =
+    parseInt(document.getElementById('fontSizeInput').value) || 200
+      const useRandomBg = document.getElementById('randomBgCheckbox').checked
+      const bgColor = useRandomBg
+    ? getRandomColor()
+    : document.getElementById('bgColorInput').value
+      const textColor = document.getElementById('textColorInput').value || '#000000'
+      const borderColor = getRandomColor()
+      const borderWidth = 10
+
+      canvas.width = canvasWidth
+      canvas.height = canvasHeight
+      ctx.fillStyle = bgColor
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight)
+      ctx.strokeStyle = borderColor
+      ctx.lineWidth = borderWidth
+      ctx.strokeRect(
+    borderWidth / 2,
+    borderWidth / 2,
+    canvasWidth - borderWidth,
+    canvasHeight - borderWidth,
+  )
+
+      ctx.fillStyle = textColor
+      ctx.font = fontSize + 'px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      wrapText(
+    ctx,
+    text,
+    canvasWidth / 2,
+    canvasHeight / 2,
+    canvasWidth * 0.9,
+    fontSize * 1.2,
+  )
+
+      baseImageData = ctx.getImageData(0, 0, canvasWidth, canvasHeight)
+      redrawOverlays()
+    }
+
+    function redrawOverlays() {
+      if (!baseImageData) return
+      ctx.putImageData(baseImageData, 0, 0)
+      overlayImages.forEach((img) => {
+        ctx.drawImage(img.image, img.x, img.y, img.width, img.height)
+        if (img === selectedImage) {
+          ctx.strokeStyle = '#f00'
+          ctx.lineWidth = 2
+          ctx.strokeRect(img.x, img.y, img.width, img.height)
+          ctx.fillStyle = '#f00'
+          ctx.fillRect(img.x + img.width - 10, img.y + img.height - 10, 10, 10)
+        }
+      })
+    }
+
+    canvas.addEventListener('dragover', (e) => e.preventDefault())
+    canvas.addEventListener('drop', (e) => {
+      e.preventDefault()
+      const file = e.dataTransfer.files[0]
+      if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader()
+        const rect = canvas.getBoundingClientRect()
+        const scaleX = canvas.width / rect.width
+        const scaleY = canvas.height / rect.height
+        const dropX = (e.clientX - rect.left) * scaleX
+        const dropY = (e.clientY - rect.top) * scaleY
+
+        reader.onload = (evt) => {
+          const img = new Image()
+          img.onload = () => {
+            const scale = 0.6
+            const w = img.width * scale
+            const h = img.height * scale
+            const x = dropX - w / 2
+            const y = dropY - h / 2
+            overlayImages.push({ image: img, x, y, width: w, height: h })
+            redrawOverlays()
+          }
+          img.src = evt.target.result
+        }
+        reader.readAsDataURL(file)
+      }
+    })
+
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect()
+      const scaleX = canvas.width / rect.width
+      const scaleY = canvas.height / rect.height
+      const mx = (e.clientX - rect.left) * scaleX
+      const my = (e.clientY - rect.top) * scaleY
+
+      selectedImage = draggingImage = resizingImage = null
+
+      for (let i = overlayImages.length - 1; i >= 0; i--) {
+        const img = overlayImages[i]
+        if (
+          mx >= img.x + img.width - 10 &&
+          mx <= img.x + img.width &&
+          my >= img.y + img.height - 10 &&
+          my <= img.y + img.height
+    ) {
+          resizingImage = img
+          selectedImage = img
+          return
+        }
+        if (
+          mx >= img.x &&
+          mx <= img.x + img.width &&
+          my >= img.y &&
+          my <= img.y + img.height
+    ) {
+          draggingImage = img
+          selectedImage = img
+          dragOffsetX = mx - img.x
+          dragOffsetY = my - img.y
+          redrawOverlays()
+          return
+        }
+      }
+      redrawOverlays()
+    })
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!draggingImage && !resizingImage) return
+      const rect = canvas.getBoundingClientRect()
+      const scaleX = canvas.width / rect.width
+      const scaleY = canvas.height / rect.height
+      const mx = (e.clientX - rect.left) * scaleX
+      const my = (e.clientY - rect.top) * scaleY
+
+      if (resizingImage) {
+        resizingImage.width = Math.max(10, mx - resizingImage.x)
+        resizingImage.height = Math.max(10, my - resizingImage.y)
+      } else if (draggingImage) {
+        draggingImage.x = mx - dragOffsetX
+        draggingImage.y = my - dragOffsetY
+      }
+      generateBase()
+    })
+
+    canvas.addEventListener('mouseup', () => {
+      draggingImage = resizingImage = null
+    })
+
+    document.addEventListener('keydown', (e) => {
+      if (
+    (e.key === 'Delete' || e.key === 'Backspace') &&
+    document.activeElement.tagName !== 'INPUT'
+  ) {
+        if (selectedImage) {
+          const index = overlayImages.indexOf(selectedImage)
+          if (index !== -1) {
+            overlayImages.splice(index, 1)
+            selectedImage = null
+            generateBase()
+          }
+        }
+      }
+    })
+
+    function sanitizeFilename(text) {
+      return (
+    text
+          .trim()
+      .replace(/[\\/:*?"<>|]+/g, '_')
+      .slice(0, 50) || 'image'
+  )
+    }
+
+    function downloadBoth() {
+      const text = document.getElementById('textInput').value || 'image'
+      const filenameBase = sanitizeFilename(text)
+      const pngData = canvas.toDataURL('image/png')
+      const jpegData = canvas.toDataURL('image/jpeg', 0.92)
+      triggerDownload(pngData, filenameBase + '.png')
+      triggerDownload(jpegData, filenameBase + '.jpg')
+    }
+
+    function triggerDownload(dataURL, filename) {
+      const link = document.createElement('a')
+      link.download = filename
+      link.href = dataURL
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
+
+    window.onload = generateBase
+  </script>
+</body>
+</html>
