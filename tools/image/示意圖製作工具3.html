@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>專業 UI 示意圖產生器 - 強化穩定版</title>
+    <style>
+      :root {
+        --primary: #4a90e2;
+        --success: #27ae60;
+        --accent: #e74c3c; /* 輔助線顏色 */
+      }
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background: #eef2f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .container {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        max-width: 1100px;
+        width: 100%;
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+      }
+      .control-group {
+        display: flex;
+        flex-direction: column;
+      }
+      label {
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: #444;
+      }
+      input,
+      textarea,
+      select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border 0.2s;
+      }
+      input:focus {
+        border-color: var(--primary);
+        outline: none;
+      }
+
+      .button-group {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding-top: 15px;
+        border-top: 1px solid #eee;
+      }
+      button {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .btn-main {
+        background: var(--primary);
+        color: white;
+      }
+      .btn-copy {
+        background: var(--success);
+        color: white;
+      }
+      .btn-download {
+        background: #34495e;
+        color: white;
+      }
+      button:hover {
+        opacity: 0.9;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      /* 畫布區域優化 */
+      .canvas-area {
+        position: relative;
+        background: #f9f9f9;
+        padding: 10px;
+        border-radius: 8px;
+        overflow: auto;
+        display: flex;
+        justify-content: center;
+      }
+      canvas {
+        background: white;
+        box-shadow:
+          0 0 0 1px #ddd,
+          0 10px 40px rgba(0, 0, 0, 0.15);
+        max-width: 100%;
+        height: auto;
+        cursor: crosshair;
+        display: block;
+      }
+      .hint {
+        font-size: 12px;
+        color: #999;
+        text-align: center;
+        margin-top: 15px;
+      }
+      #copyStatus {
+        font-weight: bold;
+        margin-left: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="controls">
+        <div class="control-group" style="grid-column: span 2">
+          <label>標題文字 (支援換行)</label>
+          <textarea id="textInput" rows="2">New UI Mockup</textarea>
+        </div>
+        <div class="control-group">
+          <label>畫布尺寸預設</label>
+          <select id="sizePreset" onchange="applyPreset(this.value)">
+            <option value="1920x1080">Desktop (1920x1080)</option>
+            <option value="1080x1920">Mobile (1080x1920)</option>
+            <option value="1080x1080">Square (1:1)</option>
+            <option value="custom">自定義</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>寬 x 高</label>
+          <div style="display: flex; gap: 5px">
+            <input type="number" id="widthInput" value="1920" />
+            <input type="number" id="heightInput" value="1080" />
+          </div>
+        </div>
+        <div class="control-group">
+          <label>字體大小 / 顏色</label>
+          <div style="display: flex; gap: 5px">
+            <input type="number" id="fontSizeInput" value="180" />
+            <input type="color" id="textColorInput" value="#333333" />
+          </div>
+        </div>
+        <div class="control-group">
+          <label>背景顏色</label>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <input type="color" id="bgColorInput" value="#f0f2f5" />
+            <label style="margin: 0; font-weight: normal; font-size: 12px">
+              <input type="checkbox" id="randomBgCheckbox" /> 隨機
+            </label>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button class="btn-main" onclick="generateBase()">重新產生</button>
+          <button class="btn-copy" onclick="copyToClipboard()">
+            複製到剪貼簿<span id="copyStatus"></span>
+          </button>
+          <button class="btn-download" onclick="downloadImage()">
+            下載 PNG
+          </button>
+        </div>
+      </div>
+
+      <div class="canvas-area">
+        <canvas id="myCanvas"></canvas>
+      </div>
+
+      <p class="hint">
+        💡
+        <b>進階技巧：</b>
+        拖入圖片後可隨意移動與縮放。移動到中心或「邊緣」時會自動吸附並顯示紅色參考線。選取後按
+        Delete 刪除。
+      </p>
+    </div>
+
+    <script>
+      const canvas = document.getElementById("myCanvas");
+      const ctx = canvas.getContext("2d");
+      let baseImageData = null;
+      const overlayImages = [];
+      let selectedImage = null,
+        draggingImage = null,
+        resizingImage = null;
+      let dragOffsetX = 0,
+        dragOffsetY = 0;
+
+      // 輔助線狀態
+      let activeGuides = { x: [], y: [] };
+
+      window.onload = () => {
+        generateBase();
+        const autoUpdateIds = [
+          "textInput",
+          "widthInput",
+          "heightInput",
+          "fontSizeInput",
+          "bgColorInput",
+          "textColorInput",
+        ];
+        autoUpdateIds.forEach((id) =>
+          document.getElementById(id).addEventListener("input", () => {
+            if (id !== "randomBgCheckbox") generateBase();
+          }),
+        );
+      };
+
+      function applyPreset(val) {
+        if (val === "custom") return;
+        const [w, h] = val.split("x");
+        document.getElementById("widthInput").value = w;
+        document.getElementById("heightInput").value = h;
+        generateBase();
+      }
+
+      function getRandomColor() {
+        return `hsl(${Math.floor(Math.random() * 360)}, 60%, 85%)`;
+      }
+
+      // 優化基底產生流程
+      function generateBase() {
+        const text = document.getElementById("textInput").value || "";
+        const w = parseInt(document.getElementById("widthInput").value) || 1920;
+        const h =
+          parseInt(document.getElementById("heightInput").value) || 1080;
+        const fontSize =
+          parseInt(document.getElementById("fontSizeInput").value) || 100;
+        const bgColor = document.getElementById("randomBgCheckbox").checked
+          ? getRandomColor()
+          : document.getElementById("bgColorInput").value;
+
+        canvas.width = w;
+        canvas.height = h;
+
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, w, h);
+
+        // 裝飾邊框
+        ctx.strokeStyle = "rgba(0,0,0,0.04)";
+        ctx.lineWidth = w * 0.02;
+        ctx.strokeRect(
+          ctx.lineWidth / 2,
+          ctx.lineWidth / 2,
+          w - ctx.lineWidth,
+          h - ctx.lineWidth,
+        );
+
+        ctx.fillStyle = document.getElementById("textColorInput").value;
+        ctx.font = `bold ${fontSize}px "Segoe UI", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        const lines = text.split("\n");
+        const lineHeight = fontSize * 1.2;
+        const totalH = lines.length * lineHeight;
+        lines.forEach((line, i) => {
+          ctx.fillText(
+            line,
+            w / 2,
+            h / 2 - totalH / 2 + lineHeight / 2 + i * lineHeight,
+          );
+        });
+
+        // 儲存無輔助線、無選取框的乾淨影像
+        baseImageData = ctx.getImageData(0, 0, w, h);
+        redraw();
+      }
+
+      function redraw() {
+        if (!baseImageData) return;
+        ctx.putImageData(baseImageData, 0, 0);
+
+        // 繪製對齊輔助線 (中心與邊緣)
+        ctx.save();
+        ctx.strokeStyle = "#e74c3c";
+        ctx.lineWidth = 1.5;
+        activeGuides.x.forEach((x) => {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, canvas.height);
+          ctx.stroke();
+        });
+        activeGuides.y.forEach((y) => {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(canvas.width, y);
+          ctx.stroke();
+        });
+        ctx.restore();
+
+        overlayImages.forEach((img) => {
+          ctx.drawImage(img.image, img.x, img.y, img.width, img.height);
+          if (img === selectedImage) {
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = "#4a90e2";
+            ctx.lineWidth = 2;
+            ctx.strokeRect(img.x, img.y, img.width, img.height);
+            ctx.setLineDash([]);
+            ctx.fillStyle = "#4a90e2";
+            // 縮放控制點
+            ctx.beginPath();
+            ctx.arc(img.x + img.width, img.y + img.height, 8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      // 修正：圖片拖入後的渲染問題
+      canvas.addEventListener("dragover", (e) => e.preventDefault());
+      canvas.addEventListener("drop", (e) => {
+        e.preventDefault();
+        const file = e.dataTransfer.files[0];
+        if (file && file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = (evt) => {
+            const img = new Image();
+            img.onload = () => {
+              const ratio = img.width / img.height;
+              const nw = canvas.width * 0.3;
+              overlayImages.push({
+                image: img,
+                x: (canvas.width - nw) / 2,
+                y: (canvas.height - nw / ratio) / 2,
+                width: nw,
+                height: nw / ratio,
+              });
+              redraw();
+            };
+            img.src = evt.target.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      canvas.addEventListener("mousedown", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scale = canvas.width / rect.width;
+        const mx = (e.clientX - rect.left) * scale;
+        const my = (e.clientY - rect.top) * scale;
+
+        selectedImage = draggingImage = resizingImage = null;
+
+        for (let i = overlayImages.length - 1; i >= 0; i--) {
+          const img = overlayImages[i];
+          // 點擊右下角圓圈縮放
+          const dist = Math.sqrt(
+            Math.pow(mx - (img.x + img.width), 2) +
+              Math.pow(my - (img.y + img.height), 2),
+          );
+          if (dist < 20) {
+            resizingImage = img;
+            selectedImage = img;
+            return;
+          }
+          // 點擊圖片本體
+          if (
+            mx >= img.x &&
+            mx <= img.x + img.width &&
+            my >= img.y &&
+            my <= img.y + img.height
+          ) {
+            draggingImage = img;
+            selectedImage = img;
+            dragOffsetX = mx - img.x;
+            dragOffsetY = my - img.y;
+            redraw();
+            return;
+          }
+        }
+        redraw();
+      });
+
+      canvas.addEventListener("mousemove", (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scale = canvas.width / rect.width;
+        const mx = (e.clientX - rect.left) * scale;
+        const my = (e.clientY - rect.top) * scale;
+
+        activeGuides = { x: [], y: [] };
+
+        if (resizingImage) {
+          resizingImage.width = Math.max(30, mx - resizingImage.x);
+          resizingImage.height =
+            resizingImage.width *
+            (resizingImage.image.height / resizingImage.image.width);
+          redraw();
+        } else if (draggingImage) {
+          let nx = mx - dragOffsetX;
+          let ny = my - dragOffsetY;
+
+          // 多點磁吸感應 (中心、四邊)
+          const snapPointsX = [
+            0,
+            canvas.width / 2 - draggingImage.width / 2,
+            canvas.width - draggingImage.width,
+          ];
+          const snapPointsY = [
+            0,
+            canvas.height / 2 - draggingImage.height / 2,
+            canvas.height - draggingImage.height,
+          ];
+          const threshold = 15;
+
+          snapPointsX.forEach((targetX, idx) => {
+            if (Math.abs(nx - targetX) < threshold) {
+              nx = targetX;
+              // 繪製輔助線位置
+              const lineX =
+                idx === 0 ? 0 : idx === 1 ? canvas.width / 2 : canvas.width;
+              activeGuides.x.push(lineX);
+            }
+          });
+
+          snapPointsY.forEach((targetY, idx) => {
+            if (Math.abs(ny - targetY) < threshold) {
+              ny = targetY;
+              const lineY =
+                idx === 0 ? 0 : idx === 1 ? canvas.height / 2 : canvas.height;
+              activeGuides.y.push(lineY);
+            }
+          });
+
+          draggingImage.x = nx;
+          draggingImage.y = ny;
+          redraw();
+        }
+      });
+
+      canvas.addEventListener("mouseup", () => {
+        draggingImage = resizingImage = null;
+        activeGuides = { x: [], y: [] };
+        redraw();
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (
+          (e.key === "Delete" || e.key === "Backspace") &&
+          selectedImage &&
+          document.activeElement.tagName !== "TEXTAREA" &&
+          document.activeElement.tagName !== "INPUT"
+        ) {
+          overlayImages.splice(overlayImages.indexOf(selectedImage), 1);
+          selectedImage = null;
+          redraw();
+        }
+      });
+
+      async function copyToClipboard() {
+        const status = document.getElementById("copyStatus");
+        // 複製前先重繪一次確保沒有選取框
+        const tempSelected = selectedImage;
+        selectedImage = null;
+        redraw();
+
+        canvas.toBlob(async (blob) => {
+          try {
+            await navigator.clipboard.write([
+              new ClipboardItem({ [blob.type]: blob }),
+            ]);
+            status.innerText = "已複製 ✨";
+            setTimeout(() => (status.innerText = ""), 2000);
+          } catch (err) {
+            alert("複製失敗。");
+          }
+          selectedImage = tempSelected;
+          redraw();
+        });
+      }
+
+      function downloadImage() {
+        const tempSelected = selectedImage;
+        selectedImage = null;
+        redraw();
+        const link = document.createElement("a");
+        link.download = `Mockup_${Date.now()}.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+        selectedImage = tempSelected;
+        redraw();
+      }
+    </script>
+  </body>
+</html>
