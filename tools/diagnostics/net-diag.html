@@ -1,0 +1,1143 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NET DIAGNOSTICS (未完成)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #080c0f;
+        --surface: #0e1419;
+        --border: #1e2d3d;
+        --accent: #00e5ff;
+        --accent2: #39ff14;
+        --accent3: #ff6b35;
+        --text: #c8d8e8;
+        --muted: #4a6278;
+        --header-bg: #0a1520;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Space Mono", monospace;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      /* grid background */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 20px 60px;
+        position: relative;
+        z-index: 1;
+      }
+
+      /* HEADER */
+      header {
+        padding: 32px 0 24px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 36px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .logo-pulse {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--accent2);
+        box-shadow: 0 0 12px var(--accent2);
+        animation: pulse 2s infinite;
+        flex-shrink: 0;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.8);
+        }
+      }
+      h1 {
+        font-family: "Syne", sans-serif;
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        font-weight: 800;
+        letter-spacing: 0.12em;
+        color: #fff;
+      }
+      h1 span {
+        color: var(--accent);
+      }
+      .header-sub {
+        margin-left: auto;
+        font-size: 0.7rem;
+        color: var(--muted);
+        text-align: right;
+        line-height: 1.6;
+      }
+
+      /* SECTION */
+      .section {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        margin-bottom: 24px;
+        overflow: hidden;
+      }
+      .section-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 20px;
+        background: var(--header-bg);
+        border-bottom: 1px solid var(--border);
+      }
+      .section-header .tag {
+        font-size: 0.65rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        padding: 2px 8px;
+        border-radius: 2px;
+        font-weight: 700;
+      }
+      .tag-speed {
+        background: rgba(0, 229, 255, 0.12);
+        color: var(--accent);
+        border: 1px solid rgba(0, 229, 255, 0.3);
+      }
+      .tag-request {
+        background: rgba(57, 255, 20, 0.1);
+        color: var(--accent2);
+        border: 1px solid rgba(57, 255, 20, 0.25);
+      }
+      .tag-server {
+        background: rgba(255, 107, 53, 0.1);
+        color: var(--accent3);
+        border: 1px solid rgba(255, 107, 53, 0.25);
+      }
+      .tag-headers {
+        background: rgba(168, 85, 247, 0.1);
+        color: #c084fc;
+        border: 1px solid rgba(168, 85, 247, 0.3);
+      }
+      .section-title {
+        font-family: "Syne", sans-serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #fff;
+      }
+      .section-body {
+        padding: 24px 20px;
+      }
+
+      /* SPEED TEST */
+      /* Server selector */
+      .server-selector {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+      .srv-btn {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        padding: 10px 16px;
+        cursor: pointer;
+        transition: all 0.18s;
+        text-align: left;
+        min-width: 160px;
+        position: relative;
+      }
+      .srv-btn:hover {
+        border-color: var(--accent);
+        color: var(--text);
+      }
+      .srv-btn.active {
+        border-color: var(--accent);
+        background: rgba(0, 229, 255, 0.06);
+        color: #fff;
+      }
+      .srv-btn.active::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--accent);
+      }
+      .srv-btn-name {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+      }
+      .srv-btn-caps {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+      }
+      .cap {
+        font-size: 0.6rem;
+        padding: 1px 6px;
+        border-radius: 2px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .cap-ok {
+        background: rgba(57, 255, 20, 0.12);
+        color: var(--accent2);
+        border: 1px solid rgba(57, 255, 20, 0.25);
+      }
+      .cap-no {
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        border: 1px solid var(--border);
+        text-decoration: line-through;
+      }
+      .cap-partial {
+        background: rgba(255, 107, 53, 0.1);
+        color: var(--accent3);
+        border: 1px solid rgba(255, 107, 53, 0.25);
+      }
+
+      /* start row */
+      .speed-controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+      }
+      .speed-start-btn {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: transparent;
+        border: 1px solid var(--accent);
+        color: var(--accent);
+        font-family: "Space Mono", monospace;
+        font-size: 0.82rem;
+        padding: 10px 24px;
+        cursor: pointer;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        transition: all 0.2s;
+      }
+      .speed-start-btn:hover:not(:disabled) {
+        background: rgba(0, 229, 255, 0.08);
+        box-shadow: 0 0 20px rgba(0, 229, 255, 0.2);
+      }
+      .speed-start-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+        animation: none;
+      }
+      .btn-dot.active-pulse {
+        animation: pulse 1s infinite;
+      }
+
+      /* metric label with server badge */
+      .metric-server {
+        font-size: 0.58rem;
+        letter-spacing: 0.1em;
+        margin-top: 2px;
+        color: var(--muted);
+        text-transform: uppercase;
+      }
+      .metric-na .metric-value {
+        color: var(--muted) !important;
+        opacity: 0.4;
+      }
+
+      .speed-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+      .metric-card {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--border);
+        padding: 16px;
+        border-radius: 2px;
+        position: relative;
+        overflow: hidden;
+      }
+      .metric-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+      }
+      .metric-card.dl::before {
+        background: var(--accent);
+      }
+      .metric-card.ul::before {
+        background: var(--accent2);
+      }
+      .metric-card.ping::before {
+        background: var(--accent3);
+      }
+      .metric-card.jitter::before {
+        background: #c084fc;
+      }
+      .metric-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .metric-value {
+        font-family: "Syne", sans-serif;
+        font-size: 2rem;
+        font-weight: 800;
+        color: #fff;
+        line-height: 1;
+        transition: all 0.3s;
+      }
+      .metric-unit {
+        font-size: 0.65rem;
+        color: var(--muted);
+        margin-top: 4px;
+        letter-spacing: 0.1em;
+      }
+      .metric-card.dl .metric-value {
+        color: var(--accent);
+      }
+      .metric-card.ul .metric-value {
+        color: var(--accent2);
+      }
+      .metric-card.ping .metric-value {
+        color: var(--accent3);
+      }
+      .metric-card.jitter .metric-value {
+        color: #c084fc;
+      }
+
+      /* Progress bar */
+      .progress-wrap {
+        margin-top: 8px;
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s;
+        border-radius: 2px;
+      }
+      .dl .progress-bar {
+        background: var(--accent);
+      }
+      .ul .progress-bar {
+        background: var(--accent2);
+      }
+      .ping .progress-bar {
+        background: var(--accent3);
+      }
+      .jitter .progress-bar {
+        background: #c084fc;
+      }
+
+      .speed-status {
+        font-size: 0.72rem;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        min-height: 20px;
+      }
+      .speed-status.running {
+        color: var(--accent);
+      }
+      .speed-status.done {
+        color: var(--accent2);
+      }
+      .speed-status.error {
+        color: #f87171;
+      }
+
+      /* KV TABLE */
+      .kv-grid {
+        display: grid;
+        grid-template-columns: minmax(140px, 220px) 1fr;
+        gap: 0;
+      }
+      .kv-row {
+        display: contents;
+      }
+      .kv-row > * {
+        padding: 9px 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 0.78rem;
+        line-height: 1.5;
+        word-break: break-all;
+      }
+      .kv-row:last-child > * {
+        border-bottom: none;
+      }
+      .kv-key {
+        color: var(--muted);
+        font-size: 0.7rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border);
+      }
+      .kv-val {
+        color: var(--text);
+      }
+      .kv-val.highlight {
+        color: var(--accent);
+      }
+      .kv-val.highlight2 {
+        color: var(--accent2);
+      }
+      .kv-val.highlight3 {
+        color: var(--accent3);
+      }
+
+      /* HEADERS TABLE */
+      .headers-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.75rem;
+      }
+      .headers-table tr {
+        border-bottom: 1px solid var(--border);
+      }
+      .headers-table tr:last-child {
+        border-bottom: none;
+      }
+      .headers-table td {
+        padding: 8px 14px;
+        vertical-align: top;
+      }
+      .headers-table td:first-child {
+        color: var(--muted);
+        text-transform: uppercase;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        width: 240px;
+        border-right: 1px solid var(--border);
+        white-space: nowrap;
+      }
+      .headers-table td:last-child {
+        word-break: break-all;
+      }
+      .loading-line {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+      .spin {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        flex-shrink: 0;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* copy button */
+      .copy-btn {
+        margin-left: auto;
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--muted);
+        font-family: "Space Mono", monospace;
+        font-size: 0.65rem;
+        padding: 4px 12px;
+        cursor: pointer;
+        letter-spacing: 0.1em;
+        transition: all 0.2s;
+        text-transform: uppercase;
+      }
+      .copy-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      /* footer */
+      footer {
+        margin-top: 48px;
+        border-top: 1px solid var(--border);
+        padding-top: 20px;
+        font-size: 0.68rem;
+        color: var(--muted);
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      #ts {
+        color: var(--accent);
+      }
+
+      @media (max-width: 600px) {
+        .speed-metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+        .kv-grid {
+          grid-template-columns: 1fr;
+        }
+        .kv-key {
+          border-right: none;
+          border-bottom: none;
+          padding-bottom: 2px;
+        }
+        .kv-val {
+          padding-top: 2px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="logo-pulse"></div>
+        <h1>NET<span>DIAG</span></h1>
+        <div class="header-sub">
+          CLIENT DIAGNOSTIC REPORT<br />
+          <span id="ts">—</span>
+        </div>
+      </header>
+
+      <!-- SPEED TEST -->
+      <div class="section">
+        <div class="section-header">
+          <span class="tag tag-speed">01</span>
+          <span class="section-title">SPEED TEST</span>
+          <button class="copy-btn" id="copySpeedBtn">COPY</button>
+        </div>
+        <div class="section-body">
+          <!-- Server selector -->
+          <div class="server-selector">
+            <button class="srv-btn active" data-srv="mixed">
+              <span class="srv-btn-name">★ MIXED (推薦)</span>
+              <span class="srv-btn-caps">
+                <span class="cap cap-ok">Ping</span>
+                <span class="cap cap-ok">Download</span>
+                <span class="cap cap-ok">Upload</span>
+                <span class="cap cap-ok">Jitter</span>
+              </span>
+            </button>
+            <button class="srv-btn" data-srv="cloudflare">
+              <span class="srv-btn-name">CLOUDFLARE</span>
+              <span class="srv-btn-caps">
+                <span class="cap cap-ok">Ping</span>
+                <span class="cap cap-ok">Download</span>
+                <span class="cap cap-no">Upload</span>
+                <span class="cap cap-ok">Jitter</span>
+              </span>
+            </button>
+            <button class="srv-btn" data-srv="httpbin">
+              <span class="srv-btn-name">HTTPBIN</span>
+              <span class="srv-btn-caps">
+                <span class="cap cap-ok">Ping</span>
+                <span class="cap cap-no">Download</span>
+                <span class="cap cap-ok">Upload</span>
+                <span class="cap cap-ok">Jitter</span>
+              </span>
+            </button>
+          </div>
+          <div class="speed-controls">
+            <button class="speed-start-btn" id="startBtn">
+              <span class="btn-dot" id="btnDot"></span>
+              START TEST
+            </button>
+            <span class="speed-status" id="speedStatus" style="margin: 0"
+              >Press START TEST to begin</span
+            >
+          </div>
+          <div class="speed-metrics">
+            <div class="metric-card dl" id="card-dl">
+              <div class="metric-label">DOWNLOAD</div>
+              <div class="metric-value" id="dlVal">—</div>
+              <div class="metric-unit">Mbps</div>
+              <div class="metric-server" id="dlSrv">—</div>
+              <div class="progress-wrap">
+                <div class="progress-bar" id="dlBar"></div>
+              </div>
+            </div>
+            <div class="metric-card ul" id="card-ul">
+              <div class="metric-label">UPLOAD</div>
+              <div class="metric-value" id="ulVal">—</div>
+              <div class="metric-unit">Mbps</div>
+              <div class="metric-server" id="ulSrv">—</div>
+              <div class="progress-wrap">
+                <div class="progress-bar" id="ulBar"></div>
+              </div>
+            </div>
+            <div class="metric-card ping" id="card-ping">
+              <div class="metric-label">PING</div>
+              <div class="metric-value" id="pingVal">—</div>
+              <div class="metric-unit">ms</div>
+              <div class="metric-server" id="pingSrv">—</div>
+              <div class="progress-wrap">
+                <div class="progress-bar" id="pingBar"></div>
+              </div>
+            </div>
+            <div class="metric-card jitter" id="card-jitter">
+              <div class="metric-label">JITTER</div>
+              <div class="metric-value" id="jitterVal">—</div>
+              <div class="metric-unit">ms</div>
+              <div class="metric-server" id="jitterSrv">—</div>
+              <div class="progress-wrap">
+                <div class="progress-bar" id="jitterBar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REQUEST INFO -->
+      <div class="section">
+        <div class="section-header">
+          <span class="tag tag-request">02</span>
+          <span class="section-title">REQUEST INFORMATION</span>
+          <button class="copy-btn" id="copyReqBtn">COPY</button>
+        </div>
+        <div class="section-body" style="padding: 0">
+          <div class="kv-grid" id="reqInfo">
+            <div class="kv-row">
+              <div class="kv-key">Status</div>
+              <div class="kv-val">
+                <div class="loading-line">
+                  <span class="spin"></span> Loading…
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVER INFO -->
+      <div class="section">
+        <div class="section-header">
+          <span class="tag tag-server">03</span>
+          <span class="section-title">SERVER INFORMATION</span>
+          <button class="copy-btn" id="copySrvBtn">COPY</button>
+        </div>
+        <div class="section-body" style="padding: 0">
+          <div class="kv-grid" id="srvInfo">
+            <div class="kv-row">
+              <div class="kv-key">Status</div>
+              <div class="kv-val">
+                <div class="loading-line">
+                  <span class="spin"></span> Loading…
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REQUEST HEADERS -->
+      <div class="section">
+        <div class="section-header">
+          <span class="tag tag-headers">04</span>
+          <span class="section-title">REQUEST HEADERS</span>
+          <button class="copy-btn" id="copyHdrBtn">COPY</button>
+        </div>
+        <div class="section-body" style="padding: 0">
+          <table class="headers-table" id="headersTable">
+            <tbody>
+              <tr>
+                <td colspan="2">
+                  <div class="loading-line" style="padding: 12px 14px">
+                    <span class="spin"></span> Fetching headers…
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <footer>
+        <span>NETDIAG // CLIENT REPORT</span>
+        <span id="footerTs">—</span>
+      </footer>
+    </div>
+
+    <script>
+      // ─── Timestamp ───────────────────────────────────────────────────────────────
+      function nowStr() {
+        return new Date().toISOString().replace("T", " ").slice(0, 23) + " UTC";
+      }
+      document.getElementById("ts").textContent = nowStr();
+      document.getElementById("footerTs").textContent = nowStr();
+      setInterval(() => {
+        const t = nowStr();
+        document.getElementById("ts").textContent = t;
+        document.getElementById("footerTs").textContent = t;
+      }, 1000);
+
+      // ─── KV helper ───────────────────────────────────────────────────────────────
+      function buildKV(rows) {
+        return rows
+          .map(
+            ([k, v, cls]) => `
+    <div class="kv-row">
+      <div class="kv-key">${k}</div>
+      <div class="kv-val${cls ? " " + cls : ""}">${v || "—"}</div>
+    </div>`,
+          )
+          .join("");
+      }
+
+      // ─── Copy helper ─────────────────────────────────────────────────────────────
+      function copySection(btn, getText) {
+        const text = getText();
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = "COPIED!";
+          setTimeout(() => (btn.textContent = orig), 1500);
+        });
+      }
+
+      // ─── Speed test data store ────────────────────────────────────────────────────
+      // ─── Speed test data store ────────────────────────────────────────────────────
+      const speedData = {
+        dl: null,
+        ul: null,
+        ping: null,
+        jitter: null,
+        server: null,
+      };
+
+      // ─── Server profiles ─────────────────────────────────────────────────────────
+      const SERVERS = {
+        cloudflare: {
+          label: "Cloudflare",
+          ping: () =>
+            `https://speed.cloudflare.com/__down?bytes=1&r=${Math.random()}`,
+          download: () =>
+            `https://speed.cloudflare.com/__down?bytes=25000000&r=${Math.random()}`,
+          upload: null, // CORS blocked
+        },
+        httpbin: {
+          label: "httpbin.org",
+          ping: () => `https://httpbin.org/get?r=${Math.random()}`,
+          download: null, // no large-file endpoint
+          upload: () => "https://httpbin.org/post",
+        },
+      };
+
+      const MIXED_PROFILE = {
+        label: "Mixed",
+        ping: SERVERS.cloudflare.ping,
+        download: SERVERS.cloudflare.download,
+        upload: SERVERS.httpbin.upload,
+        pingSrv: "Cloudflare",
+        dlSrv: "Cloudflare",
+        ulSrv: "httpbin.org",
+      };
+
+      let activeSrv = "mixed";
+
+      document.querySelectorAll(".srv-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".srv-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          activeSrv = btn.dataset.srv;
+          resetMetricCards();
+        });
+      });
+
+      function getProfile() {
+        if (activeSrv === "mixed") return MIXED_PROFILE;
+        const s = SERVERS[activeSrv];
+        return {
+          label: s.label,
+          ping: s.ping,
+          download: s.download,
+          upload: s.upload,
+          pingSrv: s.label,
+          dlSrv: s.label,
+          ulSrv: s.label,
+        };
+      }
+
+      function resetMetricCards() {
+        const p = getProfile();
+        ["dlVal", "ulVal", "pingVal", "jitterVal"].forEach(
+          (id) => (document.getElementById(id).textContent = "—"),
+        );
+        ["dlBar", "ulBar", "pingBar", "jitterBar"].forEach(
+          (id) => (document.getElementById(id).style.width = "0%"),
+        );
+        document
+          .getElementById("card-dl")
+          .classList.toggle("metric-na", !p.download);
+        document
+          .getElementById("card-ul")
+          .classList.toggle("metric-na", !p.upload);
+        document.getElementById("dlSrv").textContent = p.download
+          ? p.dlSrv
+          : "N/A — no endpoint";
+        document.getElementById("ulSrv").textContent = p.upload
+          ? p.ulSrv
+          : "N/A — CORS blocked";
+        document.getElementById("pingSrv").textContent = p.pingSrv;
+        document.getElementById("jitterSrv").textContent = p.pingSrv;
+      }
+
+      // ─── 01  Speed Test ──────────────────────────────────────────────────────────
+      function setMetric(id, barId, value, max) {
+        document.getElementById(id).textContent = value;
+        if (max) {
+          const pct = Math.min(100, (parseFloat(value) / max) * 100);
+          document.getElementById(barId).style.width = pct + "%";
+        }
+      }
+      function setStatus(msg, cls) {
+        const el = document.getElementById("speedStatus");
+        el.textContent = msg;
+        el.className = "speed-status" + (cls ? " " + cls : "");
+      }
+
+      async function measurePing(pingFn, rounds = 12) {
+        const times = [];
+        for (let i = 0; i < rounds; i++) {
+          const t0 = performance.now();
+          await fetch(pingFn(), { cache: "no-store" });
+          times.push(performance.now() - t0);
+        }
+        const trimmed = times.slice(2);
+        const avg = trimmed.reduce((a, b) => a + b, 0) / trimmed.length;
+        const jitter =
+          trimmed.reduce((sum, t) => sum + Math.abs(t - avg), 0) /
+          trimmed.length;
+        return { ping: avg, jitter };
+      }
+
+      async function measureDownload(dlFn) {
+        const res = await fetch(dlFn(), { cache: "no-store" });
+        const t0 = performance.now();
+        const buf = await res.arrayBuffer();
+        const elapsed = (performance.now() - t0) / 1000;
+        return (buf.byteLength * 8) / elapsed / 1e6;
+      }
+
+      async function measureUpload(ulFn) {
+        const CHUNK = 2 * 1024 * 1024;
+        const seed = new Uint8Array(65536);
+        crypto.getRandomValues(seed);
+        const results = [];
+        for (let i = 0; i < 3; i++) {
+          const buf = new Uint8Array(CHUNK);
+          for (let off = 0; off < CHUNK; off += seed.length)
+            buf.set(seed.subarray(0, Math.min(seed.length, CHUNK - off)), off);
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 12000);
+          const t0 = performance.now();
+          try {
+            await fetch(ulFn(), {
+              method: "POST",
+              body: buf,
+              headers: { "Content-Type": "application/octet-stream" },
+              cache: "no-store",
+              signal: controller.signal,
+            });
+            const mbps = (CHUNK * 8) / ((performance.now() - t0) / 1000) / 1e6;
+            results.push(mbps);
+            const avg = results.reduce((a, b) => a + b, 0) / results.length;
+            setMetric("ulVal", "ulBar", avg.toFixed(2), 500);
+          } catch (e) {
+            if (e.name !== "AbortError") throw e;
+          } finally {
+            clearTimeout(timer);
+          }
+        }
+        if (results.length === 0)
+          throw new Error("Upload failed — unreachable or timed out");
+        return results.reduce((a, b) => a + b, 0) / results.length;
+      }
+
+      document
+        .getElementById("startBtn")
+        .addEventListener("click", async () => {
+          const btn = document.getElementById("startBtn");
+          const dot = document.getElementById("btnDot");
+          btn.disabled = true;
+          dot.classList.add("active-pulse");
+          resetMetricCards();
+          const p = getProfile();
+          speedData.server = p.label;
+
+          try {
+            setStatus(`[${p.pingSrv}] Measuring ping & jitter…`, "running");
+            const { ping, jitter } = await measurePing(p.ping);
+            speedData.ping = ping.toFixed(1);
+            speedData.jitter = jitter.toFixed(1);
+            setMetric("pingVal", "pingBar", ping.toFixed(1), 200);
+            setMetric("jitterVal", "jitterBar", jitter.toFixed(1), 50);
+
+            if (p.download) {
+              setStatus(`[${p.dlSrv}] Testing download speed…`, "running");
+              const dl = await measureDownload(p.download);
+              speedData.dl = dl.toFixed(2);
+              setMetric("dlVal", "dlBar", dl.toFixed(2), 1000);
+            } else {
+              speedData.dl = null;
+              document.getElementById("dlVal").textContent = "N/A";
+            }
+
+            if (p.upload) {
+              setStatus(
+                `[${p.ulSrv}] Testing upload speed… (3 rounds)`,
+                "running",
+              );
+              const ul = await measureUpload(p.upload);
+              speedData.ul = ul.toFixed(2);
+              setMetric("ulVal", "ulBar", ul.toFixed(2), 500);
+            } else {
+              speedData.ul = null;
+              document.getElementById("ulVal").textContent = "N/A";
+            }
+
+            setStatus(`✓ Test complete  ·  ${p.label}`, "done");
+          } catch (e) {
+            setStatus("Error: " + e.message, "error");
+          }
+          btn.disabled = false;
+          dot.classList.remove("active-pulse");
+        });
+
+      document.getElementById("copySpeedBtn").addEventListener("click", () => {
+        copySection(
+          document.getElementById("copySpeedBtn"),
+          () =>
+            `SPEED TEST RESULTS\nServer   : ${speedData.server || "—"}\nDownload : ${speedData.dl || "—"} Mbps\nUpload   : ${speedData.ul || "—"} Mbps\nPing     : ${speedData.ping || "—"} ms\nJitter   : ${speedData.jitter || "—"} ms`,
+        );
+      });
+
+      // init
+      resetMetricCards();
+
+      // ─── 02  Request Information ──────────────────────────────────────────────────
+      async function loadRequestInfo() {
+        const el = document.getElementById("reqInfo");
+
+        // Basic URL info (available immediately)
+        const proto = location.protocol;
+        const host = location.hostname;
+        const path = location.pathname + location.search;
+
+        let rows = [
+          ["Protocol", proto.replace(":", ""), "highlight"],
+          ["Host", host, "highlight"],
+          ["Path", path || "/"],
+        ];
+
+        // Fetch IP & geo via ipapi.co
+        try {
+          const r = await fetch("https://ipapi.co/json/");
+          const d = await r.json();
+          rows = [
+            ["Client IP", d.ip, "highlight"],
+            ["Protocol", proto.replace(":", ""), "highlight"],
+            ["Host", host],
+            ["Path", path || "/"],
+            ["ASN", d.asn || "—"],
+            ["Latitude", d.latitude != null ? d.latitude.toString() : "—"],
+            ["Longitude", d.longitude != null ? d.longitude.toString() : "—"],
+            ["City", d.city || "—"],
+            ["Region", d.region || "—"],
+            [
+              "Country",
+              d.country_name ? `${d.country_name} (${d.country_code})` : "—",
+              "highlight2",
+            ],
+            ["Continent", d.continent_code || "—"],
+            ["Org / ISP", d.org || "—"],
+            ["Timezone", d.timezone || "—"],
+          ];
+        } catch (e) {
+          rows.push(["IP Lookup Error", e.message]);
+        }
+
+        el.innerHTML = buildKV(rows);
+      }
+
+      document.getElementById("copyReqBtn").addEventListener("click", () => {
+        copySection(document.getElementById("copyReqBtn"), () => {
+          const rows = document.querySelectorAll("#reqInfo .kv-row");
+          return (
+            "REQUEST INFORMATION\n" +
+            Array.from(rows)
+              .map(
+                (r) =>
+                  `${r.querySelector(".kv-key").textContent.trim().padEnd(16)}: ${r.querySelector(".kv-val").textContent.trim()}`,
+              )
+              .join("\n")
+          );
+        });
+      });
+
+      // ─── 03  Server Information ───────────────────────────────────────────────────
+      async function loadServerInfo() {
+        const el = document.getElementById("srvInfo");
+        try {
+          const r = await fetch("https://speed.cloudflare.com/meta", {
+            cache: "no-store",
+          });
+          const d = await r.json();
+          // server IP from response headers or meta
+          const serverIp = d.clientIp; // CF meta returns client IP; server IP via CF-Ray
+          const rows = [
+            ["Test Server", "Cloudflare Speed Network", "highlight3"],
+            [
+              "Server IP",
+              r.headers?.get("cf-connecting-ip") || d.ip || "—",
+              "highlight",
+            ],
+            ["Colo / Region", d.colo || "—", "highlight3"],
+            ["City", d.city || "—"],
+            ["Country", d.country ? `${d.country}` : "—", "highlight2"],
+            ["Continent", d.continent || "—"],
+            ["Latitude", d.latitude != null ? d.latitude.toString() : "—"],
+            ["Longitude", d.longitude != null ? d.longitude.toString() : "—"],
+            ["Region", d.region || "—"],
+            ["ASN", d.asn ? `AS${d.asn}` : "—"],
+          ];
+          el.innerHTML = buildKV(rows);
+        } catch (e) {
+          // Fallback: try CF trace
+          try {
+            const r2 = await fetch("https://www.cloudflare.com/cdn-cgi/trace");
+            const txt = await r2.text();
+            const obj = {};
+            txt.split("\n").forEach((line) => {
+              const [k, ...v] = line.split("=");
+              if (k) obj[k.trim()] = v.join("=").trim();
+            });
+            const rows = [
+              ["FL (Colo)", obj.fl || "—", "highlight3"],
+              ["Visit IP", obj.ip || "—", "highlight"],
+              ["Colo", obj.colo || "—"],
+              ["HTTP", obj.http || "—"],
+              ["TLS", obj.tls || "—"],
+              ["Loc", obj.loc || "—", "highlight2"],
+              ["Note", "Extended server data unavailable"],
+            ];
+            el.innerHTML = buildKV(rows);
+          } catch (e2) {
+            el.innerHTML = buildKV([["Error", e2.message]]);
+          }
+        }
+      }
+
+      document.getElementById("copySrvBtn").addEventListener("click", () => {
+        copySection(document.getElementById("copySrvBtn"), () => {
+          const rows = document.querySelectorAll("#srvInfo .kv-row");
+          return (
+            "SERVER INFORMATION\n" +
+            Array.from(rows)
+              .map(
+                (r) =>
+                  `${r.querySelector(".kv-key").textContent.trim().padEnd(16)}: ${r.querySelector(".kv-val").textContent.trim()}`,
+              )
+              .join("\n")
+          );
+        });
+      });
+
+      // ─── 04  Request Headers ─────────────────────────────────────────────────────
+      async function loadHeaders() {
+        const tbody = document.querySelector("#headersTable tbody");
+        try {
+          const r = await fetch("https://httpbin.org/headers", {
+            cache: "no-store",
+          });
+          const d = await r.json();
+          const headers = d.headers || {};
+          const rows = Object.entries(headers).sort((a, b) =>
+            a[0].localeCompare(b[0]),
+          );
+          tbody.innerHTML = rows
+            .map(([k, v]) => `<tr><td>${k}</td><td>${v}</td></tr>`)
+            .join("");
+        } catch (e) {
+          tbody.innerHTML = `<tr><td colspan="2" style="padding:14px;color:#f87171">Failed to fetch headers: ${e.message}<br><small style="color:var(--muted)">Note: Some browsers may block cross-origin header inspection.</small></td></tr>`;
+        }
+      }
+
+      document.getElementById("copyHdrBtn").addEventListener("click", () => {
+        copySection(document.getElementById("copyHdrBtn"), () => {
+          const rows = document.querySelectorAll("#headersTable tr");
+          return (
+            "REQUEST HEADERS\n" +
+            Array.from(rows)
+              .map((r) => {
+                const cells = r.querySelectorAll("td");
+                return cells.length >= 2
+                  ? `${cells[0].textContent.trim().padEnd(36)}: ${cells[1].textContent.trim()}`
+                  : "";
+              })
+              .filter(Boolean)
+              .join("\n")
+          );
+        });
+      });
+
+      // ─── Init ─────────────────────────────────────────────────────────────────────
+      loadRequestInfo();
+      loadServerInfo();
+      loadHeaders();
+    </script>
+  </body>
+</html>
